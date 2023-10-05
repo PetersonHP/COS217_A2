@@ -22,8 +22,9 @@ static size_t replaceAndWrite(const char *pcLine,
 {
    char c;
    int i = 0;
-   size_t replacements = 0;
+   int replacements = 0;
    char *replacePoint;
+   char *linePointer = (char *) pcLine;
 
    assert(pcLine != NULL);
    assert(pcFrom != NULL);
@@ -31,36 +32,47 @@ static size_t replaceAndWrite(const char *pcLine,
 
    /* if there is nothing to replace, simply print pcLine and 
       return 0. */
-   if ((replacePoint = Str_search(pcLine, pcFrom)) == NULL) {
-      printf("%s", pcLine);
-      return replacements;
+   if (((replacePoint = Str_search(linePointer, pcFrom)) == NULL) ||
+      (*pcFrom == '\0')) {
+      while ((c = *linePointer) != '\0') {
+         putchar(c);
+         linePointer++;
+      }
+      return (size_t) replacements;
    }
    
    do {
       /* increment replacements */
-      replacements += 1;
+      replacements++;
       
       /* increment pcLine up to replacePoint and print each char along 
          the way */
-      while (pcLine != replacePoint) {
-         putchar(*pcLine);
-         pcLine++;
+      while (linePointer != replacePoint) {
+         putchar(*linePointer);
+         linePointer++;
       }
 
       /* put replacement chars */
-      while((c = pcTo[i++]) != '\0') {
+      while((c = pcTo[i]) != '\0') {
          putchar(c);
+         i++;
       }
       i = 0;
-
+      
       /* move pcLine */
-      while((c = pcFrom[i++]) != '\0') {
-         pcLine++;
+      while(pcFrom[i] != '\0') {
+         linePointer++;
+         i++;
       }
       i = 0;
-   } while ((replacePoint = Str_search(pcLine, pcFrom)) != NULL);
+   } while ((replacePoint = Str_search(linePointer, pcFrom)) != NULL);
+
+   /* Print the rest of the string */
+   while ((c = linePointer[i++]) != '\0') {
+      putchar(c);
+   }
    
-   return replacements;
+   return (size_t) replacements;
 }
 
 /*-------------------------------------------------------------------*/
@@ -96,7 +108,7 @@ int main(int argc, char *argv[])
    pcTo = argv[2];
 
    while (fgets(acLine, MAX_LINE_SIZE, stdin) != NULL) {
-      replaceAndWrite(acLine, pcFrom, pcTo);
+      uReplaceCount += replaceAndWrite(acLine, pcFrom, pcTo);
    }
 
    fprintf(stderr, "%lu replacements\n", (unsigned long)uReplaceCount);
